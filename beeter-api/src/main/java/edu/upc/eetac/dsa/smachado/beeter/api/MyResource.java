@@ -8,8 +8,8 @@ import javax.ws.rs.core.MediaType;
 /**
  * Root resource (exposed at "myresource" path)
  */
-@Path("myresource")
-public class MyResource {
+@Path("myresource/pepito")//probamos en el navegador http://localhost:8080/beeter-api/myresource/pepito
+public class MyResource {//son pojo que no hereda hacia ningun sitio
 
     /**
      * Method handling HTTP GET requests. The returned object will be sent
