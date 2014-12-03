@@ -6,6 +6,7 @@ package edu.upc.eetac.dsa.mleiva.beeter.api;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -220,5 +221,67 @@ public class BeeterAPI {
 
         return sting;
     }
+
+    public Sting createSting(String subject, String content) throws AppException {
+        Sting sting = new Sting();
+        sting.setSubject(subject);
+        sting.setContent(content);
+        HttpURLConnection urlConnection = null;
+        try {
+            JSONObject jsonSting = createJsonSting(sting);
+            URL urlPostStings = new URL(rootAPI.getLinks().get("create-stings")
+                    .getTarget());
+            urlConnection = (HttpURLConnection) urlPostStings.openConnection();
+            String mediaType = rootAPI.getLinks().get("create-strings").getParameters().get("type");
+            urlConnection.setRequestProperty("Accept",
+                    MediaType.BEETER_API_STING);
+            urlConnection.setRequestProperty("Content-Type",
+                    MediaType.BEETER_API_STING);
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setDoInput(true);
+            urlConnection.setDoOutput(true);
+            urlConnection.connect();
+            PrintWriter writer = new PrintWriter(
+                    urlConnection.getOutputStream());
+            writer.println(jsonSting.toString());
+            writer.close();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    urlConnection.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            jsonSting = new JSONObject(sb.toString());
+
+
+            sting.setStingid(jsonSting.getInt("stingid"));
+            sting.setLastModified(jsonSting.getLong("lastModified"));
+            sting.setSubject(jsonSting.getString("subject"));
+            sting.setContent(jsonSting.getString("content"));
+            sting.setUsername(jsonSting.getString("username"));
+            JSONArray jsonLinks = jsonSting.getJSONArray("links");
+            parseLinks(jsonLinks, sting.getLinks());
+        } catch (JSONException e) {
+            Log.e(TAG, e.getMessage(), e);
+            throw new AppException("Error parsing response");
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage(), e);
+            throw new AppException("Error getting response");
+        } finally {
+            if (urlConnection != null)
+                urlConnection.disconnect();
+        }
+        return sting;
+    }
+
+    private JSONObject createJsonSting(Sting sting) throws JSONException {
+        JSONObject jsonSting = new JSONObject();
+        jsonSting.put("subject", sting.getSubject());
+        jsonSting.put("content", sting.getContent());
+
+        return jsonSting;
+    }
+
 
 }
